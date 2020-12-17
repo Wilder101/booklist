@@ -1,4 +1,4 @@
-// ES6 implementation of Book and UI objects
+// ES6 implementation of Book and UI objects, plus Local Storage
 
 // Book Class
 class Book {
@@ -54,7 +54,7 @@ class UI {
         container.insertBefore(div, form);
 
         // Show for 3 seconds
-        setTimeout(function(){
+        setTimeout(function() {
             document.querySelector(".alert").remove();
         }, 3000);
     }
@@ -77,6 +77,83 @@ class UI {
         document.getElementById("isbn").value = "";
     }
 }
+
+// Local Storage Class with static methods (which do not require instantiation)
+class Store {
+
+    // Get books method
+    static getBooks() {
+
+        // Local variable
+        let books;
+
+        // Check Local Storage for any stored books
+        if(localStorage.getItem("books") === null) {
+
+            // Set to empty array
+            books = [];
+
+        // Capture existing books in Local Storage
+        } else {
+
+            // Parse Local Storage entry from a string to an array
+            books = JSON.parse(localStorage.getItem("books"));
+        }
+
+        return books;
+    }
+
+    // Display books method
+    static displayBooks() {
+
+        // Local array of books
+        const books = Store.getBooks();
+
+        books.forEach(function(book) {
+
+            // Instantiate UI
+            const ui = new UI;
+
+            // Add book to UI
+            ui.addBookToList(book);
+        });
+    }
+
+    // Add book method
+    static addBook(book) {
+
+        // Local array of books
+        const books = Store.getBooks();
+
+        // Push new book onto book array
+        books.push(book);
+
+        // Set Local Storage
+        localStorage.setItem("books", JSON.stringify(books));
+    }
+
+    // Remove book method
+    static removeBook(isbn) {
+
+        // Local array of books
+        const books = Store.getBooks();
+
+        // Check books for matching ibn
+        books.forEach(function(book, index) {
+
+            // Take out matching isbn
+            if(book.isbn === isbn) {
+                books.splice(index, 1);
+            }
+        });
+
+        // Set Local Storage
+        localStorage.setItem("books", JSON.stringify(books));
+    }
+}
+
+// Event Listener for DOM Load Event
+document.addEventListener("DOMContentLoaded", Store.displayBooks);
 
 // Event Listener for add book
 document.getElementById("book-form").addEventListener("submit", function(e){
@@ -103,6 +180,9 @@ document.getElementById("book-form").addEventListener("submit", function(e){
         // Add book to list
         ui.addBookToList(book);
 
+        // Add book to Local Storage
+        Store.addBook(book);
+
         // Show success
         ui.showAlert("Book Added!", "success");
 
@@ -122,6 +202,9 @@ document.getElementById("book-list").addEventListener("click", function(e){
 
     // Delete book
     ui.deleteBook(e.target);
+
+    // Remove from Local Storage
+    Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
 
     // Show alert
     ui.showAlert("Book removed", "success");
